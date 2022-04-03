@@ -1,0 +1,10 @@
+<launch>
+  <node pkg="dp_diffdrive_pkg" type="motor_interface.py" name="motor_interface" output="screen" />
+
+  <node pkg="dp_diffdrive_pkg" type="twist_to_motors.py" name="twist_to_motors" output="screen">
+    <remap from="twist" to="cmd_vel"/>
+    <rosparam param="base_width">0.775</rosparam>
+    <!--rosparam param="rate">50</rosparam-->
+    <!--rosparam param="timeout_ticks">2</rosparam-->
+  </node>
+</launch>

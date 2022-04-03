@@ -1,0 +1,22 @@
+<launch>
+  <rosparam param="ticks_meter">7669.395847518</rosparam>
+  
+  <node pkg="dp_diffdrive_pkg" type="motor_interface.py" name="motor_interface" output="screen" />
+
+  <node pkg="dp_diffdrive_pkg" type="twist_to_motors.py" name="twist_to_motors" output="screen">
+    <remap from="twist" to="cmd_vel"/>
+    <rosparam param="base_width">0.775</rosparam>
+    <!--rosparam param="rate">50</rosparam-->
+    <!--rosparam param="timeout_ticks">2</rosparam-->
+  </node>
+
+  <node pkg="dp_diffdrive_pkg" type="diff_tf.py" name="diff_tf">
+     <rosparam param="rate">10</rosparam>
+     <rosparam param="base_width">0.775</rosparam>
+     
+     <rosparam param="base_frame_id">link_base</rosparam>
+     <rosparam param="odom_frame_id">odom</rosparam>
+     <rosparam param="encoder_min">-2147483648</rosparam> <!-- int32 max -->
+     <rosparam param="encoder_max">2147483647</rosparam>
+  </node>
+</launch>
