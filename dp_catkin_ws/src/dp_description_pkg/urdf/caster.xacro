@@ -1,0 +1,122 @@
+<?xml version="1.0"?>
+
+
+<robot xmlns:xacro="http://ros.org/wiki/xacro" >
+
+	<!-- Meshes -->
+    <xacro:property name="mesh_caster" value="package://dp_description_pkg/meshes/caster_wheel_v4.dae" />
+  	<xacro:property name="mesh_base" value="package://dp_description_pkg/meshes/caster_holder_v4.dae" />
+
+	<!-- Caster Dimensions -->
+    <xacro:property name="caster_wheel_length" value="0.030" /> <!-- 0.02333 -->
+    <xacro:property name="caster_wheel_radius" value="${0.110/2}" /> <!-- 0.024165 -->
+	<xacro:property name="caster_base_joint_y" value="0.0378" /> <!-- -0.044 -->
+	<xacro:property name="caster_base_joint_x" value="0" /> <!-- -0.02626 -->
+    <xacro:property name="caster_base_joint_z" value="-0.0826" /> <!-- -0.090 -->
+    <!--<xacro:property name="caster_base_link_z" value="-0.15615" />  -0.05615 -->
+
+	<!-- Parameters -->
+	<xacro:property name="wheel_kp" value="1000000" />
+    <xacro:property name="wheel_kd" value="1" />
+    <xacro:property name="wheel_mu1" value="10000000" />
+    <xacro:property name="wheel_mu2" value="10000000" />
+
+    <xacro:macro name="caster" params="caster_prefix parent_link *joint_pose">
+		<!-- Caster Wheel Link -->
+		<link name="${caster_prefix}_caster_link">
+			<inertial>
+				<mass value="0.038" />
+				<origin xyz="0 0 0" />
+				<inertia  ixx="0.000009" ixy="0" ixz="0" iyy="0.000013" iyz="0" izz="0.000008" />
+			</inertial>
+
+			<visual>
+                <origin xyz="0 0 0" rpy="0 0 0" />
+				<geometry>
+					<mesh filename="${mesh_caster}"/>
+				</geometry>
+			</visual>
+			
+			<collision>
+				<origin xyz="0 0 0" rpy="0 ${PI/2} 0" />
+				<geometry>
+					<cylinder length="${caster_wheel_length}" radius="${caster_wheel_radius}" />
+				</geometry>
+			</collision>
+		</link>
+
+		<!-- Caster Base Link -->
+        <link name="${caster_prefix}_caster_base">
+			<inertial>
+				<mass value="0.066" />
+				<origin xyz="0 0 0" />
+				<inertia  ixx="0.00004" ixy="0" ixz="0.00002" iyy="0.00005" iyz="0" izz="0.000035" />
+			</inertial>
+
+			<visual>
+				<origin xyz="0 0 0" rpy="0 0 0" />
+				<geometry>
+					<mesh filename="${mesh_base}" />
+				</geometry>
+			</visual>
+		</link>
+
+		<!-- Caster Base Link and Wheel Link Joint -->
+        <joint name="${caster_prefix}_cwheel" type="continuous">
+			<parent link="${caster_prefix}_caster_base"/>
+			<child link="${caster_prefix}_caster_link"/>
+			<origin xyz="${caster_base_joint_x} ${caster_base_joint_y} ${caster_base_joint_z}" rpy="0 0 0" />
+			<axis xyz="1 0 0" rpy="0 0 0" />
+        	<!-- <dynamics friction="0.100" /> -->
+		</joint>
+
+		<!-- Caster base and parent joint -->
+		<joint name="${caster_prefix}_caster" type="continuous">
+			<parent link="${parent_link}"/>
+			<child link="${caster_prefix}_caster_base"/>
+			<xacro:insert_block name="joint_pose"/>
+			<axis xyz="0 0 1" rpy="0 0 0" />       
+			<dynamics friction="0.100" />
+		</joint>
+		    
+        <gazebo reference="${caster_prefix}_caster_base">
+	        <mu1 value="${wheel_mu1}"/>
+	        <mu2 value="${wheel_mu2}"/>
+	        <kp>${wheel_kp}</kp>
+	        <kd>${wheel_kd}</kd>
+	        <fdir1 value="1 0 0"/>
+        </gazebo>
+    
+        <gazebo reference="${caster_prefix}_caster_link">
+            <mu1 value="${wheel_mu1}"/>
+            <mu2 value="${wheel_mu2}"/>
+            <kp>${wheel_kp}</kp>
+            <kd>${wheel_kd}</kd>
+            <dampingFactor>0.05</dampingFactor>
+            <fdir1 value="1 0 0"/>
+        </gazebo>
+        
+        <!-- 
+		<transmission name="${caster_prefix}_caster_trans" type="SimpleTransmission">
+			<type>transmission_interface/SimpleTransmission</type>
+			<actuator name="${caster_prefix}_caster_motor">
+				<mechanicalReduction>1</mechanicalReduction>
+			</actuator>
+			<joint name="${caster_prefix}_caster">
+				<hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+			</joint>
+		</transmission>
+
+
+		<transmission name="${caster_prefix}_casterbase_trans" type="SimpleTransmission">
+			<type>transmission_interface/SimpleTransmission</type>
+			<actuator name="${caster_prefix}_casterbase_motor">
+				<mechanicalReduction>1</mechanicalReduction>
+			</actuator>
+			<joint name="${caster_prefix}_cwheel">
+				<hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+			</joint>
+		</transmission>
+		-->
+	</xacro:macro>
+</robot>

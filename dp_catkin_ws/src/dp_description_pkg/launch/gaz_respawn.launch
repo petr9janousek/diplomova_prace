@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>	
+
+    <arg name="x" default="0.0" />
+    <arg name="y" default="0.0" />
+    <arg name="z" default="0.1" />
+
+    <node name="delete_previous_model" pkg="rosservice" type="rosservice" args=" call gazebo/delete_model '{model_name: dp_robot}'" />
+
+    <param name="robot_description" command="$(find xacro)/xacro '$(find dp_description_pkg)/urdf/roboturdf.xacro'" />
+
+    <node name="rob_spawn" pkg="gazebo_ros" type="spawn_model" output="screen"
+    args="-urdf -param robot_description -model dp_robot  -x $(arg x) -y $(arg y) -z $(arg z)" />
+ 
+</launch>

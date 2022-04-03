@@ -1,0 +1,92 @@
+<?xml version="1.0"?>
+<robot name="dp_robot" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+    <xacro:property name="wheelRadius" value="${0.170/2}" />
+    <xacro:property name="wheelWidth" value="0.0648" />
+    <xacro:property name="wheelMass" value="2.95" />
+
+    <xacro:property name="mesh_wheel" value="package://dp_description_pkg/meshes/wheel_single_v4.dae" />
+  
+    <xacro:macro name="wheel" params="wheel_prefix rot parent_link *joint_pose">
+        <link name="${wheel_prefix}_wheel">
+          <collision>
+            <origin xyz="0 0 0" rpy="0 ${PI/2} ${rot*PI/2}" />
+            <geometry>
+              <cylinder length="${wheelWidth}" radius="${wheelRadius}"/>
+            </geometry>
+          </collision>
+
+          <visual>
+            <origin xyz="0 0 0" rpy="0 0 ${rot*PI/2}" />
+            <geometry>
+			    <!--  <mesh filename="package://dp_description_pkg/meshes/wheelOBJ2.dae"/> -->
+			    <mesh filename="${mesh_wheel}"/>
+	    	</geometry>
+            <material name="black"/>
+          </visual>
+
+          <inertial>
+            <origin xyz="0 0 0" rpy="0 0 ${rot*PI/2}" />
+            <mass value="${wheelMass}"/>
+            <xacro:cylinder_inertia m="${wheelMass}" r="${wheelRadius}" h="${wheelWidth}"/>
+          </inertial>
+        </link>
+
+        <joint name="joint_${wheel_prefix}_wheel" type="continuous">
+          <parent link="${parent_link}"/>
+          <child link="${wheel_prefix}_wheel"/>
+          <xacro:insert_block name="joint_pose"/>
+          <axis xyz="0 1 0" rpy="0 0 0" />
+          <limit effort="100" velocity="100"/>
+          <joint_properties damping="0.0" friction="0.0"/>
+        </joint>
+
+        <gazebo reference="${wheel_prefix}_wheel">
+            <mu1 value="1.0"/>
+            <mu2 value="1.0"/>
+            <kp  value="10000000.0" />
+            <kd  value="1.0" />
+            <fdir1 value="1 0 0"/>
+        </gazebo>
+
+        <!--
+        <joint name="joint_${wheel_prefix}_wheel_base" type="fixed">
+          <parent link="${parent_link}"/>
+          <child link="link_${wheel_prefix}_wheel_base"/>
+        </joint>
+        
+        <link name='link_${wheel_prefix}_wheel_base'>
+            <collision> 
+                <origin xyz="${rot*(-wheelWidth+chassisLength/2)} ${chassisWidth/2.5} 0.065" rpy="0 0 0"/> 
+                <geometry> 
+                    <box size="0.075 0.075 0.075"/> 
+                </geometry> 
+            </collision>
+            <visual> 
+                <origin xyz="${rot*(-wheelWidth+chassisLength/2)} ${chassisWidth/2.5} 0.065" rpy="0 0 0"/> 
+                <geometry> 
+                    <box size="0.075 0.075 0.075"/> 
+                </geometry> 
+                <material name="grey"/>
+            </visual>
+        </link>
+        -->
+        <!--
+        <gazebo reference="link_${wheel_prefix}_wheel_base">
+            <material>Gazebo/DarkGrey</material>
+        </gazebo>
+        -->
+    
+        <!-- 
+        <transmission name="${wheel_prefix}_trans">
+          <type>transmission_interface/SimpleTransmission</type>
+          <joint name="${wheel_prefix}_wheel_hinge"/>
+          <actuator name="${wheel_prefix}Motor">
+            <hardwareInterface>EffortJointInterface</hardwareInterface>
+            <mechanicalReduction>10</mechanicalReduction>
+          </actuator>
+        </transmission>
+        -->
+    </xacro:macro>
+    
+</robot>

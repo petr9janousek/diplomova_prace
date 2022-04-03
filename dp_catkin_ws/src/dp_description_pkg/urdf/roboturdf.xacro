@@ -1,0 +1,118 @@
+<?xml version="1.0"?>
+<robot name="dp_robot" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+    <!-- Constants -->
+    <xacro:property name="PI" value="3.1415926535897931"/>
+    
+    <!-- Parameters -->
+    <xacro:property name="boxLength" value="0.667" /> <!-- upper part length -->
+    <xacro:property name="boxDepth" value="0.454" />  <!-- upper part width -->
+
+    <xacro:property name="robotMass" value="56" />      <!-- Weight -->
+    <xacro:property name="robotHeight" value="1.000" /> <!-- box + robot height -->
+    
+    <xacro:property name="chassisLength" value="0.688" /> <!-- upper part length -->
+    <xacro:property name="chassisWidth" value="0.473" />  <!-- lower part width -->
+    
+    <xacro:property name="wheelRadius" value="${0.170/2}" />
+    <xacro:property name="wheelOffsetY" value="-0.045" />
+    <xacro:property name="wheelOffsetZ" value="0.550" /> <!-- box + robot height -->
+
+    <!-- Meshes -->
+    <xacro:property name="mesh_chassis" value="package://dp_description_pkg/meshes/chassis_v4.dae" />      <!-- Weight -->
+    <xacro:property name="mesh_kinect" value="package://dp_description_pkg/meshes/kinect_v4.dae" />      <!-- Weight -->
+
+    <!-- Include files -->
+    <xacro:include filename="$(find dp_description_pkg)/urdf/materials.xacro" />
+    <xacro:include filename="$(find dp_description_pkg)/urdf/macros.xacro" />
+    <xacro:include filename="$(find dp_description_pkg)/urdf/gazebo.xacro" />
+
+    <!-- Object creating macros -->
+    <xacro:include filename="$(find dp_description_pkg)/urdf/wheels.xacro" />
+    <xacro:include filename="$(find dp_description_pkg)/urdf/caster.xacro" />
+
+    <!-- Base link (no ineritia!)  -->
+    
+    <link name="link_base" />
+
+    <joint name="joint_base" type="fixed">
+      <parent link="link_base"/>
+      <child link="link_chassis"/>
+    </joint>
+    <!-- Chassis (box+chassis) -->
+    <link name='link_chassis'>
+        <inertial> 
+            <origin xyz="0 0 ${wheelOffsetZ+wheelRadius}" rpy="0 0 0"/> 
+            <mass value="${robotMass}"/> 
+            <xacro:box_inertia m="${robotMass}" x="${boxDepth}" y="${boxLength}" z="${robotHeight}"/>
+        </inertial>
+        <collision> 
+            <origin xyz="0 0 ${wheelOffsetZ+wheelRadius}" rpy="0 0 0"/> 
+                <geometry> 
+                    <box size="${boxDepth} ${boxLength} ${robotHeight}"/> 
+                </geometry> 
+        </collision>
+        <visual> 
+            <origin xyz="0 0 ${wheelOffsetZ+wheelRadius}" rpy="0 0 ${-PI/2}"/> 
+                <geometry>
+					<!--<mesh filename="package://dp_description_pkg/meshes/chassisOBJ2.dae" />-->
+					<mesh filename="${mesh_chassis}"/>
+				</geometry>
+        </visual>
+    </link>
+    
+    <!-- Sensors (kinect+pozyx+imu)-->
+    <link name="link_kinect_sensor">
+        <inertial>
+            <origin xyz="0 0 0" rpy="0 0 ${PI/2}" />
+            <mass value="1" />
+            <xacro:box_inertia m="0.5" x="0.073000" y="0.276000" z="0.072000" />
+        </inertial>
+        <collision name="collision">
+          <origin xyz="0 0 0" rpy="0 0 ${PI/2}" />
+            <geometry>
+                <box size="0.276000 0.073000 0.072000"/> 
+            </geometry>
+        </collision>
+        <visual>
+          <origin xyz="0 0 0" rpy="0 0 ${PI/2}" />
+            <geometry>
+                <!--<mesh filename="package://dp_description_pkg/meshes/kinect.dae" />-->
+				<mesh filename="${mesh_kinect}"/>
+            </geometry>
+        </visual>
+    </link>
+    
+    <joint name="joint_sensor_kinect" type="fixed">
+        <origin xyz="0.2 0 0.22" rpy="0 0 0"/>
+        <parent link="link_chassis"/>
+        <child link="link_kinect_sensor"/>
+    </joint>
+    
+    <!-- Rotates kinect if needed -->
+    <link name="link_kinect_frame"></link>
+
+    <joint name="joint_kinect_frame" type="fixed">
+        <origin xyz="0 0 0" rpy="${-PI/2} 0 ${-PI/2}"/>
+        <parent link="link_kinect_sensor"/>
+        <child link="link_kinect_frame"/>
+    </joint>
+
+    <!-- Wheels (motors+casters)-->
+    <xacro:wheel wheel_prefix="left" rot="1" parent_link="link_chassis" >
+        <origin xyz="${wheelOffsetY+chassisWidth/2} ${1*(wheelWidth/2+chassisLength/2)} ${wheelRadius}" rpy="0 0 0" />
+    </xacro:wheel>
+
+    <xacro:wheel wheel_prefix="right" rot="-1" parent_link="link_chassis" >
+        <origin xyz="${wheelOffsetY+chassisWidth/2} -${1*(wheelWidth/2+chassisLength/2)} ${wheelRadius}" rpy="0 0 0" />
+    </xacro:wheel>
+    
+    <xacro:caster caster_prefix="right" parent_link="link_chassis">
+        <origin xyz="${0.065-chassisWidth/2} ${1*(-0.05+boxLength/2)} 0.135" rpy="0 0 0" />
+    </xacro:caster>
+    
+    <xacro:caster caster_prefix="left" parent_link="link_chassis">
+        <origin xyz="${0.065-chassisWidth/2} ${-1*(-0.05+boxLength/2)} 0.135" rpy="0 0 0" />
+    </xacro:caster>
+    
+ </robot>
