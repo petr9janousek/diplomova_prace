@@ -4,6 +4,7 @@ import rospy, math, enum
 from geometry_msgs.msg import Twist, PoseStamped, Pose2D, Pose
 from nav_msgs.msg import Odometry
 from tf.transformations import euler_from_quaternion
+from freenect import sync_get_depth as get_depth
 
 class Mode(enum.IntEnum):
     ROTATE = 1
