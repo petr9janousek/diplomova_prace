@@ -96,13 +96,3 @@ if __name__ == "__main__":
             print(xy)
         except KeyboardInterrupt:
             break
-
-
-
-krabice
-
-telo_robotu
-
-kola
-
-kinect
