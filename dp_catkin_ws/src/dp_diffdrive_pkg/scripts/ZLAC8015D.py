@@ -24,6 +24,7 @@ class ZLAC8015D:
 		self.R_ACL_TIME = 0x2081
 		self.L_DCL_TIME = 0x2082
 		self.R_DCL_TIME = 0x2083
+		self.CLEAR_POS = 0x2005
 
 		## Velocity control
 		self.L_CMD_RPM = 0x2088
@@ -289,7 +290,7 @@ class ZLAC8015D:
 		r_pul_lo = registers[3]
 
 		l_pulse = np.int32(((l_pul_hi & 0xFFFF) << 16) | (l_pul_lo & 0xFFFF))
-		r_pulse = np.int32(((r_pul_hi & 0xFFFF) << 16) | (r_pul_lo & 0xFFFF))
+		r_pulse = -np.int32(((r_pul_hi & 0xFFFF) << 16) | (r_pul_lo & 0xFFFF))
 		l_travelled = (float(l_pulse)/self.cpr)*self.travel_in_one_rev  # unit in meter
 		r_travelled = (float(r_pulse)/self.cpr)*self.travel_in_one_rev  # unit in meter
 
@@ -303,7 +304,7 @@ class ZLAC8015D:
 		r_pul_lo = registers[3]
 
 		l_pulse = np.int32(((l_pul_hi & 0xFFFF) << 16) | (l_pul_lo & 0xFFFF))
-		r_pulse = np.int32(((r_pul_hi & 0xFFFF) << 16) | (r_pul_lo & 0xFFFF))
+		r_pulse = -np.int32(((r_pul_hi & 0xFFFF) << 16) | (r_pul_lo & 0xFFFF))
 
 		return l_pulse, r_pulse
 
@@ -323,6 +324,13 @@ class ZLAC8015D:
 
 	def clear_alarm(self):
 		result = self.client.write_register(self.CONTROL_REG, self.ALRM_CLR, unit=self.ID)
+
+	def clear_feedback(self):
+
+		result = self.client.write_register(self.CLEAR_POS, 0x1, unit=self.ID)
+		result = self.client.write_register(self.CLEAR_POS, 0x2, unit=self.ID)
+		result = self.client.write_register(self.CLEAR_POS, 0x0, unit=self.ID)
+
 
 	def emergency_stop(self):
 		result = self.client.write_register(self.CONTROL_REG, self.EMER_STOP, unit=self.ID)

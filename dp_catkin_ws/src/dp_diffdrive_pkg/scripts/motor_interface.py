@@ -13,8 +13,8 @@ class MotorInterface:
         rospy.loginfo(f"{rospy.get_name()} started")
 
         ### parameters ###
-        self.accel_time = rospy.get_param('~accel_time',500.0)  # S curve acceleratión time defaults to 1000
-        self.decel_time = rospy.get_param('~decel_time',500.0)  # S curve deceleratión time defaults to 1000
+        self.accel_time = rospy.get_param('~accel_time',200.0)  # S curve acceleratión time defaults to 1000
+        self.decel_time = rospy.get_param('~decel_time',200.0)  # S curve deceleratión time defaults to 1000
 
         ### motor prep ###
         self.motors = ZLAC8015D()
