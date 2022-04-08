@@ -68,14 +68,14 @@ class DiffTf:
         
         #### parameters #######
         self.rate = rospy.get_param('~rate',20.0)  # the rate at which to publish the transform
-        self.ticks_meter = float(rospy.get_param('ticks_meter', 7669.395845934))  # The number of wheel encoder ticks per meter of travel
+        self.ticks_meter = float(rospy.get_param('ticks_meter', 7669.39584))  # The number of wheel encoder ticks per meter of travel
         self.base_width = float(rospy.get_param('~base_width', 0.775)) # The wheel base width in meters
         
-        self.base_frame_id = rospy.get_param('~base_frame_id','base_link') # the name of the base frame of the robot
+        self.base_frame_id = rospy.get_param('~base_frame_id','link_base') # the name of the base frame of the robot
         self.odom_frame_id = rospy.get_param('~odom_frame_id', 'odom') # the name of the odometry reference frame
         
-        self.encoder_min = rospy.get_param('encoder_min', -32768)
-        self.encoder_max = rospy.get_param('encoder_max', 32768)
+        self.encoder_min = rospy.get_param('encoder_min', -2147483648)
+        self.encoder_max = rospy.get_param('encoder_max', 2147483647)
         self.encoder_low_wrap = rospy.get_param('wheel_low_wrap', (self.encoder_max - self.encoder_min) * 0.3 + self.encoder_min )
         self.encoder_high_wrap = rospy.get_param('wheel_high_wrap', (self.encoder_max - self.encoder_min) * 0.7 + self.encoder_min )
  

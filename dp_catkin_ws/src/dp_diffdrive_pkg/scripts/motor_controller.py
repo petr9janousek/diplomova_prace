@@ -13,13 +13,13 @@ class MotorInterface:
     def __init__(self):     
         rospy.init_node("motor_interface_node")
         rospy.loginfo(f"{rospy.get_name()} started")
-
         ### parameters ###
         self.accel_time = rospy.get_param('~accel_time',100.0)  # S curve acceleratión time defaults to 1000
         self.decel_time = rospy.get_param('~decel_time',100.0)  # S curve deceleratión time defaults to 1000
 
         self.hw_l = rospy.get_param('~hw_l', 0.755)
         self.hw_d = rospy.get_param('~hw_d', 0.170)
+        self.rate = rospy.get_param('~rate', 20.0)       
 
         ### motor prep ###
         self.motors = ZLAC8015D()
@@ -76,7 +76,7 @@ class MotorInterface:
             rospy.logwarn(f"Unknown state transition, state: {motor_state}, estop: {self.ESTOP}")
 
     def obtain_info(self):
-        rate = rospy.Rate(20)               #encoder published @20Hz
+        rate = rospy.Rate(self.rate)               #encoder published @20Hz
         while not self.shutdown_flag:
             rate.sleep()
             l_count, r_count = self.motors.get_pulse_count()
@@ -93,7 +93,7 @@ class MotorInterface:
             rospy.loginfo_throttle(2,f"---------------------------")
 
     def publish_encoders(self):
-        rate = rospy.Rate(20)               #encoder published @20Hz
+        rate = rospy.Rate(self.rate)               #encoder published @20Hz
         while not self.shutdown_flag:
             rate.sleep()
             l_count, r_count = self.motors.get_pulse_count()

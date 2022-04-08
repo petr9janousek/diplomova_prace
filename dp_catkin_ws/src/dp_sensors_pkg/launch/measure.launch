@@ -1,0 +1,15 @@
+<launch>
+  <node pkg="dp_diffdrive_pkg" type="motor_controller.py" name="motor_interface_node" output="screen">
+    <rosparam param="rate">200</rosparam>
+  </node>
+
+  <node pkg="dp_diffdrive_pkg" type="diff_tf.py" name="odometry_node">
+     <rosparam param="rate">200</rosparam>
+  </node>
+
+  <node pkg="dp_measure_pkg" type="measure.py" name="measrure_node">
+     <rosparam param="rate">200</rosparam>
+  </node>
+
+
+</launch>

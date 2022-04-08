@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
 import rospy, math, enum
+from collections import deque
 from geometry_msgs.msg import Twist, PoseStamped, Pose2D, Pose
 from nav_msgs.msg import Odometry
 from tf.transformations import euler_from_quaternion
-from freenect import sync_get_depth as get_depth
 
 class Mode(enum.IntEnum):
     ROTATE = 1
@@ -18,15 +18,15 @@ class DPControlPursuit():
         """
         
         #self.pose_subscriber = rospy.Subscriber("/move_base_simple/goal", PoseStamped, self.clbk_goal)  # USE RVIZ TO OBTAIN POSE
-        self.pose_subscriber = rospy.Subscriber("/decoy_pose", Pose, self.clbk_goal)            # USE DECOY TO OBTAIN POSE
-        self.pose_subscriber = rospy.Subscriber("/detect_leg_clusters", Pose, self.clbk_goal)            # USE DECOY TO OBTAIN POSE
+        self.pose_subscriber = rospy.Subscriber("/targetPose", Pose, self.clbk_goal)            # USE DECOY TO OBTAIN POSE
+        #self.pose_subscriber = rospy.Subscriber("/detect_leg_clusters", Pose, self.clbk_goal)            # USE DECOY TO OBTAIN POSE
         #self.pose_subscriber = rospy.Subscriber("/pozyx_pose", PoseStamped, self.clbk_goal)            # USE POZYX TO OBTAIN POSE
         
         self.odom_subscriber = rospy.Subscriber("/odom", Odometry, self.clbk_odom)
         self.twist_publisher = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
         
         self.current_pose = Pose2D()
-        self.target_pose = Pose2D()
+        self.target_pose = deque()
 
         self.YAW_TOLERANCE = math.radians(1) #faster later, no transforms needed, 1 degree
         self.DIST_TOLERANCE = 1.5 # meters
@@ -35,8 +35,10 @@ class DPControlPursuit():
         rospy.on_shutdown(self.shutdownhook)
 
     def clbk_goal(self, pose_msg):
-        self.target_pose = self.pose_flatten(pose_msg)
-        rospy.logdebug(f"Target pose:\n{self.target_pose}")
+        pose = self.pose_flatten(pose_msg)
+        if math.fabs(pose.x - self.target_pose[-1].x) < 0.1 and math.fabs(pose.y - self.target_pose[-1].y) < 0.1:
+            self.target_pose.append(pose) 
+        rospy.logdebug(f"Target pose:\n{pose}")
 
     def clbk_odom(self, odom_msg):
         self.current_pose = self.pose_flatten(odom_msg.pose)
@@ -55,7 +57,10 @@ class DPControlPursuit():
         elif dist_error < self.DIST_TOLERANCE/2:
             msg.linear.x = -0.5
         else:
-            msg.linear.x = 0
+            if self.target_pose.count() > 0:
+                self.target_pose.popleft()
+            else:
+                msg.linear.x = 0
 
     def rotation(self, msg):
         dx = self.target_pose.x - self.current_pose.x
