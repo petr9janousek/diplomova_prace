@@ -49,7 +49,7 @@ class DPSensors():
         self.exit_flag=True
             
 if __name__ == '__main__':
-    rospy.init_node('constroller_shortest')
+    rospy.init_node('sensors_node')
       
     controller = DPSensors()
 

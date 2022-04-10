@@ -14,12 +14,16 @@ class MotorInterface:
         rospy.init_node("motor_interface_node")
         rospy.loginfo(f"{rospy.get_name()} started")
         ### parameters ###
-        self.accel_time = rospy.get_param('~accel_time',100.0)  # S curve acceleratión time defaults to 1000
-        self.decel_time = rospy.get_param('~decel_time',100.0)  # S curve deceleratión time defaults to 1000
+        # CHANGE WILL BREAK THE PD REGULATOR - NEW IDENT MIGHT BE NEEDED
+        self.accel_time = rospy.get_param('~accel_time', 200.0)  # S curve acceleratión time defaults to 200 
+        self.decel_time = rospy.get_param('~decel_time', 200.0)  # S curve deceleratión time defaults to 200
 
         self.hw_l = rospy.get_param('~hw_l', 0.755)
         self.hw_d = rospy.get_param('~hw_d', 0.170)
-        self.rate = rospy.get_param('~rate', 20.0)       
+        self.rate = rospy.get_param('~rate', 20.0)      
+        
+        # CHANGE WILL BREAK THE PD REGULATOR - NEW IDENT MIGHT BE NEEDED
+        self.limit_speed = rospy.get_param('speed_limit', 20.0)  
 
         ### motor prep ###
         self.motors = ZLAC8015D()
@@ -97,7 +101,7 @@ class MotorInterface:
         while not self.shutdown_flag:
             rate.sleep()
             l_count, r_count = self.motors.get_pulse_count()
-            self.motors.get_linear_velocities()
+            #self.motors.get_linear_velocities()
             self.pub_lwheel.publish(l_count)
             self.pub_rwheel.publish(r_count)
             #rospy.logdebug(f"lw_enc: {l_count}, rw_enc: {r_count}")
@@ -105,12 +109,13 @@ class MotorInterface:
             #self.timer_deactivate()
 
     def clbk_twist(self, twist):
-        """        
-        if self.deact_check:
-            rospy.logwarn("deact_check")
-            self.deact_check = False
-            self.motors.enable_motor()
-        """
+        """Callback for twist message. Translates twist to motor commands. 
+        Limits speed to set maximum, default 20."""
+        # if self.deact_check:
+        #     rospy.logwarn("deact_check")
+        #     self.deact_check = False
+        #     self.motors.enable_motor()
+        
         v = twist.linear.x  #in meters per second
         w = twist.angular.z #in radians per second
 
@@ -123,14 +128,21 @@ class MotorInterface:
         #v_r = v_r * 1.2
         #v_l = v_l * 1.2
         
-        v_r = self.crop_speed(v_r, -20, 20)
-        v_l = self.crop_speed(v_l, -20, 20)
+        v_r = self.crop_speed(v_r, -self.limit_speed, self.limit_speed)
+        v_l = self.crop_speed(v_l, -self.limit_speed, self.limit_speed)
 
         rospy.loginfo(f"controller::pub vr:{v_l} vl:{v_r}")
         #vr, vl = self.crop_speed(v_r, v_l, 50,50)
         self.motors.set_rpm(int(v_l),int(v_r))
 
     def crop_speed(self, n, lowlim, highlim):
+        """Crop speed limit, simple crop function
+        
+        Arguments:
+            lowlim: lower limit
+            highlim: upper limit
+            n: value to crop in place
+        """
         return int(max(lowlim, min(n, highlim))) #int because float speed cant be set
 
     """
@@ -152,6 +164,7 @@ class MotorInterface:
     """
 
     def shutdownhook(self):
+        """Callback for ROS shutting down the node. If loop is running shutdown_flag notfication might be used."""
         self.motors.disable_motor()
         self.shutdown_flag = True
         
