@@ -1,0 +1,16 @@
+remote:
+sudo nano /etc/hosts
+    192.168.43.252  mono-hotspot
+    192.168.43.135  jetson-hotspot
+
+export ROS_MASTER_URI=http://jetson-hotspot:11311
+
+-------------------------------------------------
+local:
+sudo nano /etc/hosts
+    192.168.43.252  mono-hotspot
+    192.168.43.135  jetson-hotspot
+
+
+export ROS_MASTER_URI=http://jetson-hotspot:11311
+export ROS_IP=192.168.43.135

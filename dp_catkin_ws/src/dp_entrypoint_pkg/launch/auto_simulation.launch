@@ -1,0 +1,7 @@
+  <launch>
+    <arg name="algorithm" default="dp_control_pursuit.launch" />
+
+	<include file="$(find dp_control_pkg)/launch/start_decoy.launch"/>
+    <include file="$(find dp_control_pkg)/scripts/$(arg algorithm)"/>
+    
+  </launch>

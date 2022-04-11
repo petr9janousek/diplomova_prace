@@ -1,4 +1,0 @@
-<!-- Advantage to ROSRUN is, that this runs ROSCORE automagically -->
-<launch>
-  <node pkg="dp_diffdrive_pkg" type="motor_controller.py" name="motor_controller_node" output="screen" />
-</launch>

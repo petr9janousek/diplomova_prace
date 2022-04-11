@@ -20,10 +20,9 @@ class MotorInterface:
 
         self.hw_l = rospy.get_param('~hw_l', 0.755)
         self.hw_d = rospy.get_param('~hw_d', 0.170)
-        self.rate = rospy.get_param('~rate', 20.0)      
-        
+        self.rate = float(rospy.get_param('~rate', 20.0))
         # CHANGE WILL BREAK THE PD REGULATOR - NEW IDENT MIGHT BE NEEDED
-        self.limit_speed = rospy.get_param('speed_limit', 20.0)  
+        self.limit_speed = rospy.get_param('speed_limit', 20)  
 
         ### motor prep ###
         self.motors = ZLAC8015D()
@@ -80,7 +79,7 @@ class MotorInterface:
             rospy.logwarn(f"Unknown state transition, state: {motor_state}, estop: {self.ESTOP}")
 
     def obtain_info(self):
-        rate = rospy.Rate(self.rate)               #encoder published @20Hz
+        rate = rospy.Rate(int(self.rate))               #encoder published @20Hz
         while not self.shutdown_flag:
             rate.sleep()
             l_count, r_count = self.motors.get_pulse_count()
