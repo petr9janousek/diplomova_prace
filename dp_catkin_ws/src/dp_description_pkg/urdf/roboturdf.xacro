@@ -83,20 +83,36 @@
         </visual>
     </link>
     
-    <joint name="joint_sensor_kinect" type="fixed">
+    <joint name="joint_kinect_sensor" type="fixed">
         <origin xyz="0.2 0 0.22" rpy="0 0 0"/>
         <parent link="link_chassis"/>
         <child link="link_kinect_sensor"/>
     </joint>
     
-    <!-- Rotates kinect if needed -->
-    <link name="link_kinect_frame"></link>
-
-    <joint name="joint_kinect_frame" type="fixed">
+    <!-- From gazebo kinect Rotates kinect if needed -->
+    <link name="link_gazebo_kinect_frame"></link>
+    
+    <joint name="joint_gazebo_kinect_frame" type="fixed">
         <origin xyz="0 0 0" rpy="${-PI/2} 0 ${-PI/2}"/>
+        <parent link="link_kinect_sensor"/>
+        <child link="link_gazebo_kinect_frame"/>
+    </joint>
+
+    <!-- From real kinect
+    <link name="kinect_rgb_frame"></link>
+    <joint name="joint_kinect_rgb_frame" type="fixed">
+        <origin xyz="0 0 0" rpy="0 0 0"/>
         <parent link="link_kinect_sensor"/>
         <child link="link_kinect_frame"/>
     </joint>
+
+    <link name="kinect_depth_frame"></link>
+    <joint name="joint_kinect_depth_frame" type="fixed">
+        <origin xyz="0 0 0" rpy="0"/>
+        <parent link="link_kinect_sensor"/>
+        <child link="link_kinect_frame"/>
+    </joint>
+    -->
 
     <!-- Wheels (motors+casters)-->
     <xacro:wheel wheel_prefix="left" rot="1" parent_link="link_chassis" >

@@ -1,0 +1,29 @@
+<launch>
+  <param name="robot_description" command="$(find xacro)/xacro '$(find dp_description_pkg)/urdf/roboturdf.xacro'" />
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+
+  <include file="$(find freenect_launch)/launch/freenect.launch">
+    <arg name="camera"                          value="kinect" />
+    <arg name="motor_processing"                value="true" />
+    <arg name="rgb_processing"                  value="true" />
+    <arg name="depth_processing"                value="true" />
+    <arg name="audio_processing"                value="false" />
+    <arg name="ir_processing"                   value="false" />
+    <arg name="depth_registered_processing"     value="false" />
+    <arg name="disparity_processing"            value="false" />
+    <arg name="disparity_registered_processing" value="false" />
+    <arg name="sw_registered_processing"        value="false" />
+    <arg name="hw_registered_processing"        value="false" />
+    <arg name="num_worker_threads"              value="4" />
+
+    <arg name="rgb_frame_id"   value="kinectv1_rgb_frame" />
+    <arg name="depth_frame_id" value="kinectv1_depth_frame" />
+  </include>
+
+  <node pkg="tf" type="static_transform_publisher" name="kinect_connect_publisher" 
+    args="0 0 0 0 0 0 link_kinect_sensor kinect_link 0.02">
+  </node>
+
+  <!--<node pkg="dp_visual_pkg" type="dp_face_detector.py" name="facedetector_node" output="screen" />-->
+
+</launch>
