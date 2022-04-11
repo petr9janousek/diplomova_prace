@@ -3,10 +3,11 @@
 import rospy
 import freenect
 from random import randint
-
+from std_msgs.msg import Int8
 class DPKinect():
     def __init__(self):
-        #self.pose_subscriber = rospy.Subscriber("/odom", Odometry, self.clbk_odom)
+        self.kinect_led_subscriber = rospy.Subscriber("/kinect_led", Int8, self.set_led)
+        self.kinect_motor_subscriber = rospy.Subscriber("/kinect_led", Int8, self.set_motor)
         #self.pose_publisher = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
         
         self.ctx = freenect.init()
@@ -16,15 +17,15 @@ class DPKinect():
         rospy.on_shutdown(self.shutdownhook)
     
     def set_motor(self, val):
-        """Set motor angle 
+        """Set motor angle
+        -30  - max tilt down 
         0    - horizontal 
-        1-29 - proportional
         30   - max tilt upwards
         """
         self.clip(val, 0, 30)
         freenect.set_tilt_degs(self.dev, val)
 
-    def set_motor(self, val):
+    def set_led(self, val):
         """Set led color
         0 - off
         1 - green
@@ -34,8 +35,8 @@ class DPKinect():
         5 - green blink
         6 - red/yellow blink
         """
-        self.clip(val, 0, 30)
-        freenect.set_tilt_degs(self.dev, val)
+        self.clip(val, 0, 6)
+        freenect.set_led(self.dev, val)
 
     def motor_test(self, manual=False):
         rospy.loginfo("motor_test")
