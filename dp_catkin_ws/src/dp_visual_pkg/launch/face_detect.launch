@@ -16,8 +16,8 @@
     <arg name="hw_registered_processing"        value="false" />
     <arg name="num_worker_threads"              value="4" />
 
-    <arg name="rgb_frame_id"   value="kinectv1_rgb_frame" />
-    <arg name="depth_frame_id" value="kinectv1_depth_frame" />
+    <arg name="rgb_frame_id"   value="kinect_rgb_frame" />
+    <arg name="depth_frame_id" value="kinect_depth_frame" />
   </include>
 
   <node pkg="tf" type="static_transform_publisher" name="kinect_connect_publisher" 

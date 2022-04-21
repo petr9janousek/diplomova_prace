@@ -30,6 +30,19 @@ class DPControlPursuit():
         self.YAW_TOLERANCE = math.radians(1) #faster later, no transforms needed, 1 degree
         self.DIST_TOLERANCE = 1.5 # meters
 
+        self._r0 = 19.6641 #opt modul
+        self._r1 = 2.2746  #opt modul
+        self._T = 0.010 #10 ms
+
+        self.d0=self._r0 + self._r1/self._T
+        self.d1=self._r0 
+        self.d2=self._r1/self._T
+
+        self.u1=0
+
+        self.e1=0
+        self.e2=0
+        
         self.exit_flag = False
         rospy.on_shutdown(self.shutdownhook)
 
@@ -41,7 +54,7 @@ class DPControlPursuit():
         self.current_pose = self.pose_flatten(odom_msg.pose)
         rospy.logdebug(f"Current pose:\n{self.current_pose}")
 
-    def find_arc(self, msg):
+    def translation(self, msg):
         #x**2 + y**2
         dist_dx = self.target_pose.x - self.current_pose.x
         dist_dy = self.target_pose.y - self.current_pose.y
@@ -51,23 +64,45 @@ class DPControlPursuit():
 
         if dist_error > self.DIST_TOLERANCE:
             msg.linear.x = 1.1
-            msg.angular.z = dx*(-2/dist_error**2)
         elif dist_error < self.DIST_TOLERANCE/2:
             msg.linear.x = -0.5
-            msg.angular.z = 0
         else:
             msg.linear.x = 0
+
+    def rotation(self, msg):
+        dx = self.target_pose.x - self.current_pose.x
+        dy = self.target_pose.y - self.current_pose.y
+
+        yaw_to_target = math.atan2(dy,dx)
+        e0 = yaw_to_target - self.current_pose.theta # e = w - y
+
+        if e0 > math.pi:
+            e0 = -(2*math.pi)+e0
+        elif e0 < -math.pi:
+            e0 = (2*math.pi)+e0
+
+        rospy.loginfo(f"Yaw error: {e0} rad; {math.degrees(e0)} deg")
+        
+            #self.mode = Mode.ROTATE
+        if math.fabs(e0) < self.YAW_TOLERANCE:
             msg.angular.z = 0
+        else:
+            msg.angular.z = self.u1+ e0*(self.d0) - self.e1*(self.d1) + self.e2*(self.d2)
+            self.e1 = e0
+            self.e2 = self.e1
+            self.u1 = self.u0
 
     def move(self):
         """move Waits for target to periodicaly change and than follow
         """
         self.mode = Mode.DONE
-        call_freq = rospy.Rate(10)
+        call_freq = rospy.Rate(100)
         while not self.exit_flag:
             msg = Twist()
             
-            self.find_arc(msg)
+            self.translation(msg)
+
+            self.rotation(msg)
 
             self.twist_publisher.publish(msg)
 

@@ -41,7 +41,7 @@ class DPFaceDetector():
             x = int(x1+(x2-x1)/2)
             y = int(y1+(y2-y1)/2)
             
-            cv2.circle(image,(x,y), 1, (0,255,255), -1)
+            cv2.circle(image,(x,y), 1, (0,255,255), 10)
             cv2.rectangle(image, (x1, y1), (x2, y2),(255, 255, 0),1)    
 
         t3 = rospy.Time.now() 

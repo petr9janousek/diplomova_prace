@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<launch>
+    <arg name="device_to_use" default="cuda" />
+    <arg name="plot_images" default="false" />
+
+    <node name="peopletracker_node"
+          pkg="dp_visual_pkg"
+          type="people_tracker.py"
+          output="screen"
+          args="$(arg device_to_use) $(arg plot_images)">
+    </node>
+</launch>

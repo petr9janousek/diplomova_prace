@@ -87,7 +87,7 @@ class DPControlPursuit():
         """move Waits for target to periodicaly change and than follow
         """
         self.mode = Mode.DONE
-        call_freq = rospy.Rate(10)
+        call_freq = rospy.Rate(45)
         while not self.exit_flag:
             msg = Twist()
             

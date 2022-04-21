@@ -6,3 +6,7 @@ dp_catkin_ws/devel/
 dp_catkin_ws/.catkin_workspace
 
 dp_testing_ws/
+
+dp_catkin_ws/src/external_packages/openpose_ros_msgs/
+dp_catkin_ws/src/dp_visual_pkg/haar_config_files/
+dp_catkin_ws/src/dp_visual_pkg/trt_config_files/

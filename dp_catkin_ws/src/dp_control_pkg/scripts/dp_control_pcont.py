@@ -11,7 +11,7 @@ class Mode(enum.IntEnum):
     ORIENTATE = 3
     DONE = 4
 
-class DPControlPursuit():
+class DPControlPcontroller():
     def __init__(self):
         """__init__ Create Pure Pursuit controller, with TRANSLATE-ROTATE steps kinematics
         """
@@ -29,6 +29,7 @@ class DPControlPursuit():
 
         self.YAW_TOLERANCE = math.radians(1) #faster later, no transforms needed, 1 degree
         self.DIST_TOLERANCE = 1.5 # meters
+        self.P = 7
 
         self.exit_flag = False
         rospy.on_shutdown(self.shutdownhook)
@@ -41,7 +42,7 @@ class DPControlPursuit():
         self.current_pose = self.pose_flatten(odom_msg.pose)
         rospy.logdebug(f"Current pose:\n{self.current_pose}")
 
-    def find_arc(self, msg):
+    def translation(self, msg):
         #x**2 + y**2
         dist_dx = self.target_pose.x - self.current_pose.x
         dist_dy = self.target_pose.y - self.current_pose.y
@@ -51,13 +52,31 @@ class DPControlPursuit():
 
         if dist_error > self.DIST_TOLERANCE:
             msg.linear.x = 1.1
-            msg.angular.z = dx*(-2/dist_error**2)
         elif dist_error < self.DIST_TOLERANCE/2:
             msg.linear.x = -0.5
-            msg.angular.z = 0
         else:
             msg.linear.x = 0
+
+    def rotation(self, msg):
+        dx = self.target_pose.x - self.current_pose.x
+        dy = self.target_pose.y - self.current_pose.y
+
+        yaw_to_target = math.atan2(dy,dx)
+        yaw_error = yaw_to_target - self.current_pose.theta # e = w - y
+
+        if yaw_error > math.pi:
+            yaw_error = -(2*math.pi)+yaw_error
+        elif yaw_error < -math.pi:
+            yaw_error = (2*math.pi)+yaw_error
+
+        rospy.loginfo(f"Yaw error: {yaw_error} rad; {math.degrees(yaw_error)} deg")
+        
+        
+            #self.mode = Mode.ROTATE
+        if math.fabs(yaw_error) < self.YAW_TOLERANCE:
             msg.angular.z = 0
+        else:
+            msg.angular.z = yaw_error*(1/math.pi)*self.P
 
     def move(self):
         """move Waits for target to periodicaly change and than follow
@@ -67,7 +86,9 @@ class DPControlPursuit():
         while not self.exit_flag:
             msg = Twist()
             
-            self.find_arc(msg)
+            self.translation(msg)
+
+            self.rotation(msg)
 
             self.twist_publisher.publish(msg)
 
@@ -109,9 +130,9 @@ class DPControlPursuit():
         self.exit_flag=True
 
 if __name__ == '__main__':
-    rospy.init_node('controller_pursuit', log_level=rospy.INFO)
+    rospy.init_node('controller_pcont', log_level=rospy.INFO)
       
-    controller = DPControlPursuit()
+    controller = DPControlPcontroller()
 
     try:
         controller.move()
