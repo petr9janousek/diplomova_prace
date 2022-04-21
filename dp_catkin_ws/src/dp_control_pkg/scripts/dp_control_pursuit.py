@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 import rospy, math, enum
 from geometry_msgs.msg import Twist, PoseStamped, Pose2D, Pose
 from nav_msgs.msg import Odometry
@@ -51,7 +50,7 @@ class DPControlPursuit():
 
         if dist_error > self.DIST_TOLERANCE:
             msg.linear.x = 1.1
-            msg.angular.z = dx*(-2/dist_error**2)
+            msg.angular.z = dist_dx*(-2/dist_error**2)
         elif dist_error < self.DIST_TOLERANCE/2:
             msg.linear.x = -0.5
             msg.angular.z = 0

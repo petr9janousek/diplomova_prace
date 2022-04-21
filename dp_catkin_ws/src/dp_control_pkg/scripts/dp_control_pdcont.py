@@ -90,7 +90,7 @@ class DPControlPursuit():
             msg.angular.z = self.u1+ e0*(self.d0) - self.e1*(self.d1) + self.e2*(self.d2)
             self.e1 = e0
             self.e2 = self.e1
-            self.u1 = self.u0
+            self.u1 = msg.angular.z
 
     def move(self):
         """move Waits for target to periodicaly change and than follow
