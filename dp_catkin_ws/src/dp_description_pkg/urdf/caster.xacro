@@ -6,7 +6,6 @@
 	<!-- Meshes -->
     <xacro:property name="mesh_caster" value="package://dp_description_pkg/meshes/caster_wheel_v4.dae" />
   	<xacro:property name="mesh_base" value="package://dp_description_pkg/meshes/caster_holder_v4.dae" />
-
 	<!-- Caster Dimensions -->
     <xacro:property name="caster_wheel_length" value="0.030" /> <!-- 0.02333 -->
     <xacro:property name="caster_wheel_radius" value="${0.110/2}" /> <!-- 0.024165 -->
@@ -35,6 +34,7 @@
 				<geometry>
 					<mesh filename="${mesh_caster}"/>
 				</geometry>
+				<material name="white" />
 			</visual>
 			
 			<collision>

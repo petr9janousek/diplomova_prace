@@ -124,11 +124,11 @@
     </xacro:wheel>
     
     <xacro:caster caster_prefix="right" parent_link="link_chassis">
-        <origin xyz="${0.065-chassisWidth/2} ${1*(-0.05+boxLength/2)} 0.135" rpy="0 0 0" />
+        <origin xyz="${0.065-chassisWidth/2} ${1*(-0.05+boxLength/2)} 0.135" rpy="0 0 ${PI/2}" />
     </xacro:caster>
     
     <xacro:caster caster_prefix="left" parent_link="link_chassis">
-        <origin xyz="${0.065-chassisWidth/2} ${-1*(-0.05+boxLength/2)} 0.135" rpy="0 0 0" />
+        <origin xyz="${0.065-chassisWidth/2} ${-1*(-0.05+boxLength/2)} 0.135" rpy="0 0 ${PI/2}" />
     </xacro:caster>
     
  </robot>
