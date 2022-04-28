@@ -1,0 +1,7 @@
+<launch>
+
+  <include file="$(find dp_visual_pkg)/launch/rgbd_start.launch">
+
+  <node pkg="dp_visual_pkg" type="body_detector.py" name="bodydetector_node" output="screen" />-->
+
+</launch>

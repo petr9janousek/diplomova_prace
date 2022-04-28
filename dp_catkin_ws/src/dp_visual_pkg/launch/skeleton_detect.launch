@@ -1,8 +1,8 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
 <launch>
     <arg name="device_to_use" default="cuda" />
     <arg name="plot_images" default="false" />
+
+    <include file="$(find dp_visual_pkg)/launch/rgbd_start.launch">
 
     <node name="peopletracker_node"
           pkg="dp_visual_pkg"

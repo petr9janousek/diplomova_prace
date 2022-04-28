@@ -26,6 +26,9 @@ class ZLAC8015D:
 		self.R_DCL_TIME = 0x2083
 		self.CLEAR_POS = 0x2005
 
+		self.IN_LEV = 0x2016
+		self.X0_FUN = 0x2017
+		self.X1_FUN = 0x2018
 		## Velocity control
 		self.L_CMD_RPM = 0x2088
 		self.R_CMD_RPM = 0x2089
@@ -331,6 +334,10 @@ class ZLAC8015D:
 		result = self.client.write_register(self.CLEAR_POS, 0x2, unit=self.ID)
 		result = self.client.write_register(self.CLEAR_POS, 0x0, unit=self.ID)
 
-
 	def emergency_stop(self):
 		result = self.client.write_register(self.CONTROL_REG, self.EMER_STOP, unit=self.ID)
+
+
+	def external_stop(self):
+		result = self.client.write_register(self.IN_LEV, 0x1, unit=self.ID) #bit n = XN, 0=def. 1=inv., def=active high 
+		result = self.client.write_register(self.X0_FUN, 0x9, unit=self.ID) #0x9 emer. stop

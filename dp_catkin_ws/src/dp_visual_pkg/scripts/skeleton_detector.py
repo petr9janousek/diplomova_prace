@@ -6,7 +6,7 @@ from threading import Lock
 import rospy, rospkg
 from sensor_msgs.msg import Image
 # OpenPose objects
-from openpose_ros_msgs.msg import PersonDetection, BodypartDetection
+from openpose_ros_msgs.msg import PersonDetection, BodypartDetection, BodypartDetection_3d
 
 # trt_pose related imports
 import json
@@ -14,12 +14,15 @@ import trt_pose.coco
 import trt_pose.models
 import torch
 
+import numpy as np
 import cv2
 import torchvision.transforms as transforms
 import PIL.Image
 from trt_pose.draw_objects import DrawObjects
 from trt_pose.parse_objects import ParseObjects
 #from jetcam.utils import bgr8_to_jpeg
+
+from cv_bridge import CvBridge, CvBridgeError
 
 import numpy
 numpy.set_printoptions(threshold=sys.maxsize)
@@ -33,7 +36,9 @@ class PoepleTracker(object):
         """
 
         self.lock = Lock() #for camera reading and process
+        self.read_depth_lock = Lock()
         self.glob=(0,0)
+        self.dist=0
         rospy.on_shutdown(self.shutdownhook)
 
         # Variable to avoid publisher errors when closing script.
@@ -41,7 +46,7 @@ class PoepleTracker(object):
         self._plot_images = plot_images
 
         self.peopletrack_pub = rospy.Publisher('/peopletracker/detected_skeleton', PersonDetection, queue_size=1)
-        self.global_detection_pub = rospy.Publisher('/peopletracker/detected_centroid', BodypartDetection, queue_size=1)
+        self.global_detection_pub = rospy.Publisher('/peopletracker/detected_centroid', BodypartDetection_3d, queue_size=1)
 
         #PATHS DEFINES
         follow_people_configfiles_path = rospkg.RosPack().get_path('dp_visual_pkg')+"/trt_config_files"
@@ -63,12 +68,12 @@ class PoepleTracker(object):
         num_parts = len(self.human_pose['keypoints'])
         num_links = len(self.human_pose['skeleton'])
 
-        if device_to_use == "cuda":
+        if self._device_to_use == "cuda":
             model = trt_pose.models.resnet18_baseline_att(num_parts, 2 * num_links).cuda().eval()
         else:
             model = trt_pose.models.resnet18_baseline_att(num_parts, 2 * num_links).cpu().eval()
 
-        if device_to_use == "cuda":
+        if self._device_to_use == "cuda":
             model.load_state_dict(torch.load(model_weights_path))
         else:
             model.load_state_dict(torch.load(model_weights_path, map_location=torch.device('cpu')))
@@ -77,12 +82,12 @@ class PoepleTracker(object):
         self.HEIGHT = 224 #256
 
         rospy.loginfo("Creating empty data")
-        if device_to_use == "cuda":
+        if self._device_to_use == "cuda":
             data = torch.zeros((1, 3, self.HEIGHT, self.WIDTH)).cuda()
         else:
             data = torch.zeros((1, 3, self.HEIGHT, self.WIDTH)).cpu()
 
-        if device_to_use == "cuda":
+        if self._device_to_use == "cuda":
             import torch2trt
             from torch2trt import TRTModule
 
@@ -100,7 +105,7 @@ class PoepleTracker(object):
             # CPU ONLY
             self.model_trt = model
 
-        if device_to_use == "cuda":
+        if self._device_to_use == "cuda":
             self.mean = torch.Tensor([0.485, 0.456, 0.406]).cuda()
             self.std = torch.Tensor([0.229, 0.224, 0.225]).cuda()
         else:
@@ -115,13 +120,27 @@ class PoepleTracker(object):
         from cv_bridge import CvBridge, CvBridgeError
 
         self.cv_image = None
+        self.depth = None
 
         self.bridge_object = CvBridge()
-        self.image_sub = rospy.Subscriber("/kinect/rgb/image_mono", Image, self.camera_callback)
-            
+        self.image_sub = rospy.Subscriber("/kinect/rgb/image_rect_mono", Image, self.clbk_kinect)
+        self.depth_sub = rospy.Subscriber("/kinect/depth/image_rect", Image, self.clbk_kinect_depth)
+        
+        do_benchmark = False
+        if do_benchmark:
+            rospy.loginfo("Benchmarking...")
+            t0 = time.time()
+            torch.cuda.current_stream().synchronize()
+            for i in range(50):
+                y = self.model_trt(data)
+            torch.cuda.current_stream().synchronize()
+            t1 = time.time()
+
+            print(50.0 / (t1 - t0))
+
         rospy.loginfo("Init successfully DONE.")
 
-    def camera_callback(self,data):
+    def clbk_kinect(self,data):
         try:
             # We select bgr8 because its the OpneCV encoding by default
             self.lock.acquire()
@@ -130,6 +149,21 @@ class PoepleTracker(object):
             self.lock.release()
         except CvBridgeError as e:
             print(e)
+
+    
+    def clbk_kinect_depth(self,img_data):
+        try:
+            self.read_depth_lock.acquire()
+            self.depth = self.bridge_object.imgmsg_to_cv2(img_data, desired_encoding='passthrough')
+            if self.depth is not None:
+                self.depth  = cv2.resize(self.depth, (self.WIDTH,self.HEIGHT))   
+            self.read_depth_lock.release()
+            #if self._show_img:
+            #        cv2.imshow("depth",depth)
+            #        cv2.waitKey(1)
+        except CvBridgeError as e:
+            self.image = None
+            rospy.logwarn(e)
 
     def shutdownhook(self):
         print ("Shutdown...")
@@ -152,8 +186,11 @@ class PoepleTracker(object):
         # Draw New Image
         if self._plot_images:
             self.draw_objects(image, counts, objects, peaks)
-            cv2.circle(image,self.glob, 1, (0,255,255), 10)
-            cv2.imshow("PeopleTracking", image)
+            cv2.circle(image, self.glob, 1, (0,255,255), 10)
+            cv2.line(image, (112,0), (112,224), (127,127,127), 1)
+            cv2.line(image, (112,self.glob[1]), self.glob, (255,255,255), 1)
+            cv2.putText(image, f"{(self.glob[1]-112), {self.dist}}", self.glob, cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255,255), 1, cv2.LINE_AA)
+            cv2.imshow("detector", image)
             cv2.waitKey(1)
 
         self.publish_skeleton_markers(object_counts=counts,
@@ -173,7 +210,8 @@ class PoepleTracker(object):
                 self.lock.release()
                 after_seconds = rospy.get_time()
                 delta = after_seconds - before_seconds
-                rospy.loginfo("GPU processed in "+str(delta))
+                #rospy.loginfo("GPU processed in "+str(delta))
+                print(f"{self._device_to_use}, {delta}")
             peopletracker_rate.sleep()
         rospy.loginfo("Terminating Loop...")
 
@@ -199,8 +237,8 @@ class PoepleTracker(object):
         global_detections_num = 0
         global_x = 0
         global_y = 0
-        global_bodypart = BodypartDetection()
-
+        global_bodypart = BodypartDetection_3d()
+        depthpoints = []
         for i in range(count):
             peopletrack_msgs.person_ID = i
 
@@ -219,6 +257,10 @@ class PoepleTracker(object):
 
                     peopletrack_msgs = self.update_peopletrack_msgs(peopletrack_msgs, body_part_name, x, y)
 
+                    self.read_depth_lock.acquire()
+                    depthpoints.append(self.depth[x,y])
+                    self.read_depth_lock.release()
+
                     global_x += x
                     global_y += y
                     global_detections_num += 1
@@ -228,9 +270,18 @@ class PoepleTracker(object):
         if global_detections_num > 0:
             global_bodypart.x = round(float(global_x) / global_detections_num)
             global_bodypart.y = round(float(global_y) / global_detections_num)
-        
-        self.glob=(global_bodypart.x,global_bodypart.y)
-        self.global_detection_pub.publish(global_bodypart)
+
+            npdepthpoints = np.asarray(depthpoints)
+            npdepthpoints = npdepthpoints[np.logical_not(np.isnan(npdepthpoints))]
+            global_bodypart.z = np.median(npdepthpoints)
+            
+
+        try:
+            self.glob=(int(global_bodypart.x),int(global_bodypart.y))
+            self.dist=(int(global_bodypart.z))
+
+            self.global_detection_pub.publish(global_bodypart)
+        except: pass
 
     def update_peopletrack_msgs(self, peopletrack_msgs, body_part_name, x, y):
 
@@ -289,7 +340,7 @@ if __name__ == "__main__":
     rospy.init_node("peopletracker_node")
     
     if len(sys.argv) < 3:
-        rospy.logwarn("Not enough arguments provided, using defaults. Correct format: dev:cpu/gpu ros_camera:T/F plot:T/F")
+        rospy.logwarn("Not enough arguments provided, using defaults. Correct format: dev: \"cpu\"/\"cuda\" plot: true/false")
         pt = PoepleTracker()
     else:
         device_to_use = sys.argv[1]

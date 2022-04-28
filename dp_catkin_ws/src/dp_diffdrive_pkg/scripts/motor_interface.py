@@ -40,6 +40,7 @@ class MotorInterface:
         self.shutdown_flag = False
 
         self.motors.enable_motor()
+        #self.motors.external_stop()
         self.ESTOP = False
     
     def clbk_motor_stop(self, motor_state):
