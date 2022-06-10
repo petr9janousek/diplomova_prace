@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import rospy, math, enum
 from geometry_msgs.msg import Twist, PoseStamped, Pose2D, Pose
@@ -17,11 +17,11 @@ class DPControlPursuit():
         """
         
         #self.pose_subscriber = rospy.Subscriber("/move_base_simple/goal", PoseStamped, self.clbk_goal)  # USE RVIZ TO OBTAIN POSE
-        self.pose_subscriber = rospy.Subscriber("/decoy_pose", Pose, self.clbk_goal)            # USE DECOY TO OBTAIN POSE
-        self.pose_subscriber = rospy.Subscriber("/detect_leg_clusters", Pose, self.clbk_goal)            # USE DECOY TO OBTAIN POSE
-        #self.pose_subscriber = rospy.Subscriber("/pozyx_pose", PoseStamped, self.clbk_goal)            # USE POZYX TO OBTAIN POSE
+        #self.pose_subscriber = rospy.Subscriber("/decoy_pose", Pose, self.clbk_goal)            # USE DECOY TO OBTAIN POSE
+        #self.pose_subscriber = rospy.Subscriber("/detect_leg_clusters", Pose, self.clbk_goal)            # USE DECOY TO OBTAIN POSE
+        self.pose_subscriber = rospy.Subscriber("/uwb/position/Pose", PoseStamped, self.clbk_goal)            # USE POZYX TO OBTAIN POSE
         
-        self.odom_subscriber = rospy.Subscriber("/odom", Odometry, self.clbk_odom)
+        #self.odom_subscriber = rospy.Subscriber("/odom", Odometry, self.clbk_odom)
         self.twist_publisher = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
         
         self.current_pose = Pose2D()
@@ -62,12 +62,12 @@ class DPControlPursuit():
 
         rospy.loginfo(f"Dist error: {dist_error} m")
 
-        if dist_error > self.DIST_TOLERANCE:
-            msg.linear.x = 1.1
-        elif dist_error < self.DIST_TOLERANCE/2:
-            msg.linear.x = -0.5
-        else:
-            msg.linear.x = 0
+        # if dist_error > self.DIST_TOLERANCE:
+        #     msg.linear.x = 1.1
+        # elif dist_error < self.DIST_TOLERANCE/2:
+        #     msg.linear.x = -0.5
+        # else:
+        msg.linear.x = 0
 
     def rotation(self, msg):
         dx = self.target_pose.x - self.current_pose.x

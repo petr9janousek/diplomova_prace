@@ -1,4 +1,5 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+
 import rospy
 from geometry_msgs.msg import Pose, Point, Quaternion
 
@@ -15,8 +16,8 @@ class DP_UWB_Positioning():
             rospy.logfatal("Unable to connect POZYX")
             quit()
 
-        self.position_alg = Positioning_Alg1(self.pozyx)
-        self.imu_sensor = IMUsensor(self.pozyx)
+        self.position_alg = Positioning_Alg1(self.pozyx, remote_id=0x6a2c)
+        self.imu_sensor = IMUsensor(self.pozyx, remote_id=0x6a2c)
 
         self.pose = Pose()
         self.err_count = 0 #can init to 0 as pos_count always is at least 1 in publish pos -> 1/1 -> no /0 exception

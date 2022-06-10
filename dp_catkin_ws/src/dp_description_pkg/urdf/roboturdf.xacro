@@ -97,7 +97,15 @@
         <parent link="link_kinect_sensor"/>
         <child link="link_gazebo_kinect_frame"/>
     </joint>
-
+    <!--
+    <link name="link_uwb_frame"></link>
+    
+    <joint name="joint_uwb_frame" type="fixed">
+        <origin xyz="${chassisLength/2} 0 ${chassisHeight}" rpy="$0 0 0"/>
+        <parent link="link_chassis"/>
+        <child link="link_uwb_frame"/>
+    </joint> -->
+    
     <!-- From real kinect
     <link name="kinect_rgb_frame"></link>
     <joint name="joint_kinect_rgb_frame" type="fixed">

@@ -339,5 +339,6 @@ class ZLAC8015D:
 
 
 	def external_stop(self):
-		result = self.client.write_register(self.IN_LEV, 0x1, unit=self.ID) #bit n = XN, 0=def. 1=inv., def=active high 
+		result = self.client.write_register(self.IN_LEV, 0x0, unit=self.ID) #bit n = XN, 0=def. 1=inv., def=active high 
+		#result = self.client.write_register(self.IN_LEV, 0x3, unit=self.ID) #bit n = XN, 0=def. 1=inv., def=active high 
 		result = self.client.write_register(self.X0_FUN, 0x9, unit=self.ID) #0x9 emer. stop

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import re
 from pypozyx import *
 from pypozyx.tools.version_check import perform_latest_version_check

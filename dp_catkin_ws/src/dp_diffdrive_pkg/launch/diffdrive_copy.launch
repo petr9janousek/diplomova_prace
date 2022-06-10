@@ -42,7 +42,7 @@
       <rosparam param="timeout_ticks">4</rosparam>
       <rosparam param="rolling_pts">5</rosparam>
   </node>
-
+  
   <node pkg="dp_diffdrive_pkg" type="twist_to_motors.py" name="twist_to_motors" output="screen">
     <remap from="twist" to="cmd_vel"/>
     <rosparam param="base_width">0.775</rosparam>

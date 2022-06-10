@@ -34,6 +34,7 @@ class MotorInterface:
         self.motors.clear_feedback()
         self.motors.set_mode(3) #speed control mode
        
+        self.motors.external_stop()
         self.ESTOP = False
         """
         self.deact_check = False

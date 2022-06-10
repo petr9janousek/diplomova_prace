@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-from select import KQ_NOTE_LOWAT
+#!/usr/bin/env python3
 from cv2 import KeyPoint_convert
 from matplotlib import collections
 from numpy import positive
@@ -8,16 +7,16 @@ from pypozyx import (POZYX_POS_ALG_UWB_ONLY, POZYX_2D, POZYX_SUCCESS, FILTER_TYP
                      get_first_pozyx_serial_port)
 
 from dp_uwb_utils import (printPosition,printErrorCode)
-
+            
 class Positioning_Alg1(object):
-    def __init__(self, pozyx, anchors=None, algorithm=POZYX_POS_ALG_UWB_ONLY, dimension=POZYX_2D, height=1000, remote_id=None):
+    def __init__(self, pozyx, anchors=None, algorithm=POZYX_POS_ALG_UWB_ONLY, dimension=POZYX_2D, height=1000, remote_id=None, publish=False):
         self.pozyx = pozyx
+        #X HAS TO BE POINTING FORWARD TO COOPERATE WITH RVIZ AND GAZEBO
+        self.anchors = [DeviceCoordinates(0x6a43, 1, Coordinates(-400+200,-300, 1000)), 
+                        DeviceCoordinates(0x6a30, 1, Coordinates( 0+200,  -300, 1000)),
+                        DeviceCoordinates(0x6a78, 1, Coordinates( 0+200,   300, 1000)),
+                        DeviceCoordinates(0x6a13, 1, Coordinates(-400+200, 300, 1000))]
 
-        self.anchors = [DeviceCoordinates(0x6a43, 1, Coordinates(0, 0, 1000)),
-                        DeviceCoordinates(0x6a30, 1, Coordinates(660, 0, 1000)),
-                        DeviceCoordinates(0x6a78, 1, Coordinates(660, -450, 1000)),
-                        DeviceCoordinates(0x6a13, 1, Coordinates(0, -450, 1000))]
-        
         if anchors is not None: 
             self.anchors = anchors
             
@@ -40,6 +39,7 @@ class Positioning_Alg1(object):
             position.x = position.x / 1000
             position.y = position.y / 1000
             position.z = position.z / 1000
+
             return position
         else:
             #if error code is 
@@ -69,15 +69,15 @@ if __name__ == "__main__":
         print("No Pozyx connected. Check your USB cable or your driver!")
         quit()
     
-    remote_id = 0x6a5f                 # remote device network ID
+    remote_id = 0x6a2c                 # remote device network ID
     #remote_id = None
 
-    anchors = [DeviceCoordinates(0x6a43, 1, Coordinates(0, 0, 1000)),
-               DeviceCoordinates(0x6a30, 1, Coordinates(660, 0, 1000)),
-               DeviceCoordinates(0x6a78, 1, Coordinates(660, -450, 1000)),
-               DeviceCoordinates(0x6a13, 1, Coordinates(0, -450, 1000))]
+    anchors = [DeviceCoordinates(0x6a43, 1, Coordinates( 300,  400, 1000)),
+               DeviceCoordinates(0x6a30, 1, Coordinates( 300,    0, 1000)),
+               DeviceCoordinates(0x6a78, 1, Coordinates(-300,    0, 1000)),
+               DeviceCoordinates(0x6a13, 1, Coordinates(-300, -400, 1000))]
 
-    # positioning algorithm to use, other is PozyxConstants.POSITIONING_ALGORITHM_TRACKING
+    # positioning algorithm to use, other is PozyxConstants.POSITIONING_ALGORITHM_TRACKING or LS
     algorithm = PozyxConstants.POSITIONING_ALGORITHM_UWB_ONLY
     
     # positioning dimension. Others are PozyxConstants.DIMENSION_2D, PozyxConstants.DIMENSION_2_5D
