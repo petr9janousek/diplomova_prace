@@ -6,16 +6,16 @@ from pypozyx import (POZYX_POS_ALG_UWB_ONLY, POZYX_2D, POZYX_SUCCESS, FILTER_TYP
                      Coordinates, PozyxConstants, DeviceCoordinates, PozyxSerial, PozyxRegisters, PositionError,
                      get_first_pozyx_serial_port)
 
-from dp_uwb_utils import (printPosition,printErrorCode)
+from dp_uwb_utils import (printPosition, printErrorCode)
             
 class Positioning_Alg1(object):
     def __init__(self, pozyx, anchors=None, algorithm=POZYX_POS_ALG_UWB_ONLY, dimension=POZYX_2D, height=1000, remote_id=None, publish=False):
         self.pozyx = pozyx
         #X HAS TO BE POINTING FORWARD TO COOPERATE WITH RVIZ AND GAZEBO
-        self.anchors = [DeviceCoordinates(0x6a43, 1, Coordinates(-400+200,-300, 1000)), 
-                        DeviceCoordinates(0x6a30, 1, Coordinates( 0+200,  -300, 1000)),
-                        DeviceCoordinates(0x6a78, 1, Coordinates( 0+200,   300, 1000)),
-                        DeviceCoordinates(0x6a13, 1, Coordinates(-400+200, 300, 1000))]
+        self.anchors = [DeviceCoordinates(0x6a78, 1, Coordinates(-450,+330, 1000)), #back left
+                        DeviceCoordinates(0x6a30, 1, Coordinates(-450,-330, 1000)), #back right
+                        DeviceCoordinates(0x6a43, 1, Coordinates(-4,  -330, 1000)), #front right
+                        DeviceCoordinates(0x6a13, 1, Coordinates(-4,  +330, 1000))] #front left
 
         if anchors is not None: 
             self.anchors = anchors

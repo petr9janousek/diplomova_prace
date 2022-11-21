@@ -25,7 +25,7 @@ e/c : increase/decrease only angular speed by 10%
 
 other keys : stop
 ---------------------------------------------------
-space/' ' : EMERGENCY STOP
+SPACEBAR : EMERGENCY STOP
 y : emergency disable and ENABLE
 x : emergency disable and DISABLE
 ---------------------------------------------------

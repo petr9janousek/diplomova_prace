@@ -4,6 +4,7 @@
   
   <!-- Parameters -->
   <rosparam param="ticks_meter">7669.39584</rosparam>
+  <rosparam param="controller">true</rosparam>
 
   <!-- Launch nodes -->
   <node pkg="dp_diffdrive_pkg" type="motor_controller.py" name="motor_controller">
