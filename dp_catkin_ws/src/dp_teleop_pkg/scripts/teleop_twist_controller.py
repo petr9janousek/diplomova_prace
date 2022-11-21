@@ -42,9 +42,9 @@ class Controller():
             #print('Osa "{0}"; souřadnice X={1} Y={2}'.format(axis.name, axis.x, axis.y))
             twist = Twist()
             
-            twist.linear.x = -axis.y
-            twist.angular.z = -axis.x
-
+            twist.linear.x = -axis.y*20
+            twist.angular.z = -axis.x*20
+            
             self._twist_publisher.publish(twist)
         else:
             print('Osa "{0}"; souřadnice Z={1}'.format(axis.name, axis.value))
@@ -88,6 +88,7 @@ if __name__ == "__main__":
             alive = x._controller.device_is_alive()
             if not alive:
                 stop_publisher.publish(MotorState(True, False))
+            rospy.sleep(0.01)
         except RuntimeError:
             stop_publisher.publish(MotorState(True, False))
             print("Device disconnected. Stopping movement...")
