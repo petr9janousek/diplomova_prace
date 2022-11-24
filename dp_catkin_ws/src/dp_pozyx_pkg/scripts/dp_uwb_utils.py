@@ -14,10 +14,10 @@ class UWBtools(object):
 '''
 
 def connect_device(port = None):
-    serial_port = port if not port is None else get_first_pozyx_serial_port()
+    serial_port = port if port is not None else get_first_pozyx_serial_port()
     print(f"Trying port: {serial_port}... ", end="")
     if serial_port is None:
-        print("No Pozyx connected. Check your USB cable or your driver!")
+        print("No Pozyx device connected. Check your USB cable or your driver!")
         return None
         
     pozyx = PozyxSerial(serial_port)
