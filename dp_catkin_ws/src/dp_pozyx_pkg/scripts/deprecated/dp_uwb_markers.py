@@ -5,12 +5,13 @@ from visualization_msgs.msg import Marker
 from geometry_msgs.msg import Point
 from enum import Enum
 
-       
+from dpr_measure import PozyxMeasure
+
 class PositionMarker():
     def __init__(self):
         self.marker_pub = rospy.Publisher("/visualization_marker", Marker, queue_size = 2)
 
-    def pub_point(self, name, shape, frame, point, life=1):
+    def pub_point(self, name, shape, frame, point: Point or tuple, life=1):
         """set shape, Arrow: 0; Cube: 1 ; Sphere: 2 ; Cylinder: 3"""   
         marker = Marker()
         marker.header.frame_id = frame
@@ -26,13 +27,19 @@ class PositionMarker():
         marker.scale.z = 0.1
 
         # Set the color
-        marker.color.r = 1.0
-        marker.color.g = 0.0
-        marker.color.b = 0.0
+        marker.color.r = 0.0
+        marker.color.g = 1.0
+        marker.color.b = 1.0
         marker.color.a = 1.0
 
         # Set the pose of the marker
-        marker.pose.position = point
+        if type(point) is Point:
+            marker.pose.position = point
+        elif type(point) is tuple:
+            marker.pose.position.x = point[0]
+            marker.pose.position.y = point[1]
+            marker.pose.position.z = point[2]
+                
         marker.pose.orientation.x = 0.0
         marker.pose.orientation.y = 0.0
         marker.pose.orientation.z = 0.0
@@ -46,9 +53,11 @@ class PositionMarker():
 
 if __name__ == "__main__":
     rospy.init_node('position_marker')
-
+    id_counter = 1
+    pm = PozyxMeasure(0x6a2c)
     while not rospy.is_shutdown():
         mark = PositionMarker()
-
-        mark.pub_point(1, "map", Point())
-        rospy.sleep(0.1)
+        meas = pm.get_position()
+        if meas is not None:
+            mark.pub_point(id_counter, 1, "link_base", Point(meas.x, meas.y, meas.z), life=4)
+            id_counter+=1

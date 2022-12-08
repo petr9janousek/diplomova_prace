@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-import re
 from pypozyx import *
 from pypozyx.tools.version_check import perform_latest_version_check
 from pypozyx.structures.device_information import DeviceDetails
+
+UWB_DEFAULT_SETTINGS = UWBSettings(channel=5, bitrate=0, prf=2, plen=0x08, gain_db=11.5)
 
 '''
 class UWBtools(object):
@@ -142,22 +143,63 @@ def get_parsed_args():
     if arg[0] == "-v":
         check_pypozyx_version = True
 
+def set_filter(pozyx, remote, filter_type=FILTER_TYPE_MOVINGMEDIAN, filter_strength=10):
+    status = pozyx.setPositionFilter(filter_type, filter_strength, remote)
+    assert status == POZYX_SUCCESS, f"Unable to set filter as {filter_type}, with strength {filter_strength}" 
+
+def set_anchors(pozyx, remote, anchors, save_to_flash=False):
+    """Adds the manually measured anchors to the Pozyx's device list one for one."""
+    status = pozyx.clearDevices(remote_id=remote)
+    if status != POZYX_SUCCESS:
+        print(f"Device not cleared, status {status}")
+    for anchor in anchors:
+        status &= pozyx.addDevice(anchor, remote_id=remote)
+    if status != POZYX_SUCCESS:
+        print(f"Anchor not added, status {status}")
+    if save_to_flash:
+        pozyx.saveAnchorIds(remote_id=remote)
+        pozyx.saveRegisters([PozyxRegisters.POSITIONING_NUMBER_OF_ANCHORS], remote_id=remote)
+    assert status == POZYX_SUCCESS, f"Unable to save anchors with remote_id {hex(remote)}" 
+
+
 ############### UWB parameters
+# some params description
+# https://docs.pozyx.io/creator/configuration-of-the-uwb-parameters-arduino
+
+# performance using different params (probably only accurate for enterprise as creator kit is nerfed)
+# https://www.pozyx.io/creator-system-performance
+
+# detailed description of setting in datasheet register overview
+# https://docs.pozyx.io/creator/configuration-of-the-uwb-parameters-arduino
 def get_uwb_setting(pozyx, devices):
+    unconnectable = []
+
     if not None in devices: 
         devices.insert(0, None) #ensure tag is inserted
-    
+
     for dev in devices:
         settings = UWBSettings()
         
         if pozyx.getUWBSettings(settings, remote_id = dev) == POZYX_SUCCESS:
+            d = "local " if dev is None else str(hex(dev))
+            print(f"Device {d} has settings: {settings}")
+        else:
+            print(f"Unable to obtain settings from {str(hex(dev))}, check if tag has same settings")
+            unconnectable.append(dev)
+    
+    return unconnectable
+
+def set_uwb_setting(pozyx, devices, settings, save = False):
+    for dev in devices:
+        status = pozyx.setUWBSettings(settings, dev, save_to_flash=save)
+        if status == POZYX_SUCCESS:
             d = "local" if dev is None else str(hex(dev))
             print(f"Device {d} has settings: {settings}")
         else:
             print(f"Unable to obtain settings from {str(hex(dev))}, check if tag has same settings")
 
 
-def set_uwb_settings(pozyx, channel=5, bitrate=0, prf=2, plen=0x08, gain_db=11.5, remote_id=None):
+def set_uwb_default_settings(pozyx, channel=5, bitrate=0, prf=2, plen=0x08, gain_db=11.5, remote_id=None):
     default_settings = UWBSettings(channel=5, bitrate=0, prf=2, plen=0x08, gain_db=11.5)
     status = pozyx.setUWBSettings(default_settings, remote_id) #return to local setting
     if status == POZYX_SUCCESS:
@@ -168,8 +210,21 @@ def set_uwb_settings(pozyx, channel=5, bitrate=0, prf=2, plen=0x08, gain_db=11.5
 
 if __name__ == "__main__":
     perform_latest_version_check()
+
     pozyx = connect_device()
-    check_device(pozyx)
-    #check_device(pozyx, 0x6a30)
-    #check_network(pozyx)
-    set_uwb_settings(pozyx, remote_id = None)
+    check_network(pozyx)
+    
+    differ = get_uwb_setting(pozyx,[0x6a5f,0x6a43,0x6a78,0x6a30])
+
+    settings = UWBSettings(5,1,2,0x34,11.5) # higher bitrate and lower PLEN 512
+
+    check = input("Check if remote TAG is powered? (y=yes/n=no/r=repair): ").lower().strip()
+    if (check == "y"):
+        set_uwb_setting(pozyx, [0x6a5f,0x6a43,0x6a78,0x6a30, None], settings, save=True) # set all the devices and than self
+    elif (check == "r"):
+        print("Repairing remote tag settings after starting incorrectly.")
+        set_uwb_setting(pozyx, [None], UWB_DEFAULT_SETTINGS) # set all the devices and than self
+        differ.append(None)
+        set_uwb_setting(pozyx, differ, settings) # set all the different devices and than self
+    else:
+        print("Power remote TAG first to send necessary settings.")

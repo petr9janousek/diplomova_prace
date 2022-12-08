@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>	  
+	<!--<param name="remote_id" default="0x6a2c" />-->
+    <node name="uwb_locate" pkg="dp_pozyx_pkg" type="dpr_locate.py" output="screen" /> <!-- consider adding required="true" and respawn="true" -->
+</launch>

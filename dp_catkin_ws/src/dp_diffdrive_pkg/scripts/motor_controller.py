@@ -17,12 +17,12 @@ class MotorInterface:
         # CHANGE WILL BREAK THE PD REGULATOR - NEW IDENT MIGHT BE NEEDED
         self.accel_time = rospy.get_param('~accel_time', 200.0)  # S curve acceleratión time defaults to 200 
         self.decel_time = rospy.get_param('~decel_time', 200.0)  # S curve deceleratión time defaults to 200
-
+        #"ticks_meter"7669.39584
         self.hw_l = rospy.get_param('~hw_l', 0.755)
         self.hw_d = rospy.get_param('~hw_d', 0.170)
         self.rate = float(rospy.get_param('~rate', 20.0))
         # CHANGE WILL BREAK THE PD REGULATOR - NEW IDENT MIGHT BE NEEDED
-        self.limit_speed = rospy.get_param('speed_limit', 20)  
+        self.limit_speed = rospy.get_param('speed_limit', 80)  
 
         ### motor prep ###
         self.motors = ZLAC8015D()

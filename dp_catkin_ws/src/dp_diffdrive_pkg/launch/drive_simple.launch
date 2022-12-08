@@ -1,6 +1,4 @@
 <launch>
-  <rosparam param="ticks_meter">7669.39584</rosparam>
-  
   <node pkg="dp_diffdrive_pkg" type="motor_controller.py" name="motor_controller" output="screen">
     <rosparam param="rate">20</rosparam>
   </node>

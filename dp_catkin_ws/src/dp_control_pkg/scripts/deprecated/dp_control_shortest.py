@@ -1,8 +1,9 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import rospy, math, enum
-from geometry_msgs.msg import Twist, PoseStamped, Pose2D
+from geometry_msgs.msg import Twist, Pose, Pose2D
 from nav_msgs.msg import Odometry
+from std_msgs.msg import Float32
 from tf.transformations import euler_from_quaternion
 
 class Mode(enum.IntEnum):
@@ -14,14 +15,15 @@ class Mode(enum.IntEnum):
 class DPControlShortest():
     
     def __init__(self):
-        self.pose_subscriber = rospy.Subscriber("/move_base_simple/goal", PoseStamped, self.clbk_goal)
-        self.odom_subscriber = rospy.Subscriber("/odom", Odometry, self.clbk_odom)
+        #self.pose_subscriber = rospy.Subscriber("/move_base_simple/goal", PoseStamped, self.clbk_goal)
+        self.pose_subscriber = rospy.Subscriber("/uwb/position/pose", Pose, self.clbk_goal)  
+        #self.odom_subscriber = rospy.Subscriber("/odom", Odometry, self.clbk_odom)
         self.twist_publisher = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
         
         self.current_pose = Pose2D()
         self.target_pose = Pose2D()
 
-        self.YAW_TOLERANCE = math.radians(4)
+        self.YAW_TOLERANCE = math.radians(15)
         self.DIST_TOLERANCE = 0.5
 
         self.exit_flag = False
@@ -29,8 +31,18 @@ class DPControlShortest():
 
     def clbk_goal(self, pose_msg):
         self.target_pose = self.pose_flatten(pose_msg)
-        rospy.logwarn(f"Target pose:\n{self.target_pose}")
-        self.mode = Mode.ROTATE #position has changed restore mode to rotation
+        rospy.logwarn_throttle(0.5,f"\nTarget pose:\n{self.target_pose}")
+        dx = self.target_pose.x
+        dy = self.target_pose.y
+        angle = math.atan2(dy,dx)
+        
+        if angle > math.pi:
+            angle = -(2*math.pi)+angle
+        elif angle < -math.pi:
+            angle = (2*math.pi)+angle
+        rospy.logerr_throttle(0.5,f"\nYaw: yaw to target {math.degrees(angle)}")
+        
+        #self.move()
 
     def clbk_odom(self, odom_msg):
         self.current_pose = self.pose_flatten(odom_msg.pose)
@@ -59,12 +71,14 @@ class DPControlShortest():
             yaw_error = (2*math.pi)+yaw_error
 
         rospy.loginfo(f"Yaw error: {yaw_error} rad; {math.degrees(yaw_error)} deg")
+        #self.error_publisher.publish(Float32(math.degrees(yaw_error)))
+
         yaw_msg = Twist()
         
         if math.fabs(yaw_error) > self.YAW_TOLERANCE: 
-            yaw_msg.angular.z = 0.6 if yaw_error > 0 else -0.6 #yaw -pi:pi
+            yaw_msg.angular.z = 40 if yaw_error > 0 else -40 #yaw -pi:pi
             self.twist_publisher.publish(yaw_msg)
-            #self.mode = Mode.ROTATE
+            self.mode = Mode.ROTATE
         else:
             yaw_msg.angular.z = 0
             self.twist_publisher.publish(yaw_msg)
@@ -86,7 +100,7 @@ class DPControlShortest():
 
         dist_msg = Twist()
         if dist_error > self.DIST_TOLERANCE:
-            dist_msg.linear.x = 1
+            dist_msg.linear.x = 20
             self.twist_publisher.publish(dist_msg)
         else:
             rospy.logwarn("Changing state: to ORIENTATE")
@@ -108,7 +122,7 @@ class DPControlShortest():
         yaw_msg = Twist()
         
         if math.fabs(yaw_error) > self.YAW_TOLERANCE: 
-            yaw_msg.angular.z = 0.6 if yaw_error > 0 else -0.6 #yaw -pi:pi
+            yaw_msg.angular.z = 40 if yaw_error > 0 else -40 #yaw -pi:pi
             self.twist_publisher.publish(yaw_msg)
         else:
             yaw_msg.angular.z = 0
@@ -117,25 +131,24 @@ class DPControlShortest():
 
             
     def move(self):
-        self.mode = Mode.DONE
+        self.mode = Mode.ROTATE
         call_freq = rospy.Rate(20)
-        while not self.exit_flag:
-            if self.mode  == Mode.ROTATE:
-                self.rotation()
+        #while not self.exit_flag:
+        if self.mode  == Mode.ROTATE:
+            self.rotation()
+        elif self.mode  == Mode.TRANSLATE:
+            self.translation()
+            rospy.loginfo("DONE")
+        elif self.mode  == Mode.ORIENTATE:
+            self.orientation()
 
-            elif self.mode  == Mode.TRANSLATE:
-                self.translation()
+        elif self.mode  == Mode.DONE:
+            stop_msg = Twist()
+            stop_msg.linear.x = 0
+            stop_msg.angular.z = 0
+            self.twist_publisher.publish(stop_msg)
 
-            elif self.mode  == Mode.ORIENTATE:
-                self.orientation()
-
-            elif self.mode  == Mode.DONE:
-                stop_msg = Twist()
-                stop_msg.linear.x = 0
-                stop_msg.angular.z = 0
-                self.twist_publisher.publish(stop_msg)
-
-            call_freq.sleep()
+        call_freq.sleep()
 
     def pose_flatten(self, pose_3d):
         """pose_flatten - reduces pose from 3D to 2D using yaw as theta; 
@@ -148,13 +161,25 @@ class DPControlShortest():
             pose with x, y, theta
         """
         pose_2d = Pose2D()
-        pose_2d.x = pose_3d.pose.position.x
-        pose_2d.y = pose_3d.pose.position.y
-        euler = euler_from_quaternion((pose_3d.pose.orientation.x,
-                                                pose_3d.pose.orientation.y,
-                                                pose_3d.pose.orientation.z,
-                                                pose_3d.pose.orientation.w))
-        pose_2d.theta = euler[2] #0 roll, 1 pitch, 2 yaw
+        
+        if type(pose_3d) is Pose:
+            pose_2d.x = pose_3d.position.x
+            pose_2d.y = pose_3d.position.y 
+            euler = euler_from_quaternion((pose_3d.orientation.x,           
+                                                    pose_3d.orientation.y,  
+                                                    pose_3d.orientation.z,  
+                                                    pose_3d.orientation.w))
+            pose_2d.theta = euler[2] #0 roll, 1 pitch, 2 yaw
+        else:
+            pose_2d.x = pose_3d.pose.position.x
+            pose_2d.y = pose_3d.pose.position.y 
+            euler = euler_from_quaternion((pose_3d.pose.orientation.x,          
+                                                    pose_3d.pose.orientation.y, 
+                                                    pose_3d.pose.orientation.z, 
+                                                    pose_3d.pose.orientation.w))
+            pose_2d.theta = euler[2] #0 roll, 1 pitch, 2 yaw
+
+        #rospy.loginfo(pose_2d)
         return pose_2d
         
     def shutdownhook(self):

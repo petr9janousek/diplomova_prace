@@ -23,6 +23,18 @@ Pozyx creator kit obsahuje tzv. "anchors" = kotvy a "tags" = štítky. Anchors b
 
 V zařízeních je aktualizován firmware na verzi 1.1.
 
+## Nastavení pozyx
+* [Krátký popis parametrů](https://docs.pozyx.io/creator/configuration-of-the-uwb-parameters-arduino)
+* [Performance pomocí různých parametrů](https://www.pozyx.io/creator-system-performance)
+* [Detailní popis registrů, datasheet](https://docs.pozyx.io/creator/configuration-of-the-uwb-parameters-arduino)
+
+Klíčové je nastavení kotev k dosžení dostatečné měřící frekvence. Zdá se že *creator kit* je omezen na 60Hz pravděpodobně z business důvodů, než technických.
+
+Je monžné snížit počet kotev - což vede na nižší přesnost. Nebo změnit bitrate nebo délka preambule.
+
+    #higher bitrate and lower PLEN 512       
+    settings = UWBSettings(5,1,2,0x34,11.5) 
+
 ## ROS package
 
 Package pro ROS vychází z oficiálních examplů a pypozyx (odkazy výše). V python je možné je importovat pomocí např: `from dp_pozyx_pkg.msg import EulerAngles`
@@ -60,4 +72,3 @@ Pro měření a odesílání polohy pomocí UWB, je v současnosti implementová
       float64 z
       float64 w
       
-

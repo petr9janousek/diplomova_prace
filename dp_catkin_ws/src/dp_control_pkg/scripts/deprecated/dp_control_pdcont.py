@@ -13,13 +13,12 @@ class Mode(enum.IntEnum):
 
 class DPControlPursuit():
     def __init__(self):
-        """__init__ Create Pure Pursuit controller, with TRANSLATE-ROTATE steps kinematics
-        """
+        """__init__ Create Pure Pursuit controller, with TRANSLATE-ROTATE steps kinematics"""
         
         #self.pose_subscriber = rospy.Subscriber("/move_base_simple/goal", PoseStamped, self.clbk_goal)  # USE RVIZ TO OBTAIN POSE
         #self.pose_subscriber = rospy.Subscriber("/decoy_pose", Pose, self.clbk_goal)            # USE DECOY TO OBTAIN POSE
         #self.pose_subscriber = rospy.Subscriber("/detect_leg_clusters", Pose, self.clbk_goal)            # USE DECOY TO OBTAIN POSE
-        self.pose_subscriber = rospy.Subscriber("/uwb/position/Pose", PoseStamped, self.clbk_goal)            # USE POZYX TO OBTAIN POSE
+        self.pose_subscriber = rospy.Subscriber("/uwb/position/pose", Pose, self.clbk_goal)            # USE POZYX TO OBTAIN POSE
         
         #self.odom_subscriber = rospy.Subscriber("/odom", Odometry, self.clbk_odom)
         self.twist_publisher = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
@@ -65,7 +64,7 @@ class DPControlPursuit():
         # if dist_error > self.DIST_TOLERANCE:
         #     msg.linear.x = 1.1
         # elif dist_error < self.DIST_TOLERANCE/2:
-        #     msg.linear.x = -0.5
+        #     msg.linear.x = -0.5s
         # else:
         msg.linear.x = 0
 
@@ -100,7 +99,7 @@ class DPControlPursuit():
         while not self.exit_flag:
             msg = Twist()
             
-            self.translation(msg)
+            #self.translation(msg)
 
             self.rotation(msg)
 
@@ -137,6 +136,7 @@ class DPControlPursuit():
                                                     pose_3d.pose.orientation.w))
             pose_2d.theta = euler[2] #0 roll, 1 pitch, 2 yaw
 
+        rospy.loginfo(pose_2d)
         return pose_2d
         
     def shutdownhook(self):
